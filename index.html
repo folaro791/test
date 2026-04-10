@@ -2,37 +2,43 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>乌龟寻宝演化版 - 逻辑修复版</title>
+    <title>乌龟寻宝实验模拟</title>
     <style>
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; margin: 0; }
-        #app-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: flex; gap: 30px; }
+        :root { --red: #ff7675; --green: #00b894; --blue: #74b9ff; --panel: #2d3436; }
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; height: 100vh; overflow: hidden; }
+        #app-container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: flex; gap: 20px; width: 98vw; height: 92vh; }
         
-        /* 控制区 */
-        #control-panel { width: 300px; border-right: 1px solid #eee; padding-right: 30px; }
-        .stat-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
-        #step-display { font-size: 64px; font-weight: 800; color: #2d3436; line-height: 1; }
-        #fail-display { font-size: 16px; color: #e17055; margin-top: 10px; font-weight: bold; }
+        /* 左侧面板 */
+        #control-panel { width: 260px; border-right: 1px solid #eee; padding-right: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .stat-group { text-align: center; background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+        #step-display { font-size: 54px; font-weight: 800; color: #2d3436; line-height: 1; }
+        #fail-display { font-size: 14px; color: #e17055; margin-top: 10px; font-weight: bold; }
         
-        .weight-ui { margin-bottom: 25px; }
-        .slider-group { margin-bottom: 15px; }
+        .slider-group { margin-bottom: 12px; }
         .slider-group label { display: flex; justify-content: space-between; font-size: 13px; color: #636e72; margin-bottom: 5px; }
-        .slider-group b { color: #0984e3; }
         input[type="range"] { width: 100%; cursor: pointer; }
 
         .btn-stack { display: flex; flex-direction: column; gap: 10px; }
-        button { border: none; padding: 15px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
-        .btn-r { background: #b2bec3; }
-        .btn-f { background: #74b9ff; }
-        .btn-s { background: #00b894; }
-        button:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        button { border: none; padding: 14px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 15px; }
+        .btn-r { background: var(--red); box-shadow: 0 4px 0 #d63031; } 
+        .btn-f { background: var(--green); box-shadow: 0 4px 0 #00897b; } 
+        .btn-s { background: var(--blue); box-shadow: 0 4px 0 #0984e3; } 
+        button:active { transform: translateY(2px); box-shadow: none; }
 
-        /* 展示区 */
-        #view-panel { display: flex; flex-direction: column; align-items: center; }
-        canvas { background: white; border: 5px solid #2d3436; border-radius: 12px; }
-        #msg-log { height: 24px; color: #0984e3; font-weight: bold; margin-bottom: 10px; }
-        
-        select { width: 100%; margin-top: 20px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
-        .legend { margin-top: 20px; font-size: 12px; color: #b2bec3; text-align: center; line-height: 1.6; }
+        /* 展示区布局 */
+        #display-main { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+        #stage-row { display: flex; gap: 20px; flex: 1; min-height: 0; }
+        #canvas-area { flex: 3; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 15px; border: 1px solid #eee; }
+        canvas { background: #fff; border: 4px solid #2d3436; border-radius: 12px; width: 95%; }
+
+        /* 终端日志 */
+        #log-area { flex: 1.2; background: var(--panel); border-radius: 15px; color: #55efc4; padding: 20px; display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.2); position: relative; }
+        #log-area h4 { color: #fff; margin: 0 0 15px 0; font-size: 15px; border-left: 4px solid #55efc4; padding-left: 10px; }
+        #path-list { flex: 1; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 13px; }
+        .log-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        #msg-status { height: 24px; color: #0984e3; font-weight: bold; text-align: center; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -40,200 +46,171 @@
 <div id="app-container">
     <div id="control-panel">
         <div class="stat-group">
-            <div style="font-size:12px; color:#999; letter-spacing:1px;">当前步数</div>
+            <div id="mode-text" style="font-size:12px; color:#999; margin-bottom:10px;">系统状态：待命</div>
             <div id="step-display">0</div>
             <div id="fail-display">坠崖次数: 0</div>
-            <div id="mode-text" style="margin-top:10px; font-size:14px; font-weight:bold; color:#0984e3;">READY</div>
         </div>
 
         <div class="weight-ui">
-            <div class="slider-group">
-                <label>上 (UP) <b id="val-u">0.25</b></label>
-                <input type="range" id="sl-u" min="0" max="100" value="25" oninput="syncUI()">
-            </div>
-            <div class="slider-group">
-                <label>右 (RIGHT) <b id="val-r">0.25</b></label>
-                <input type="range" id="sl-r" min="0" max="100" value="25" oninput="syncUI()">
-            </div>
-            <div class="slider-group">
-                <label>下 (DOWN) <b id="val-d">0.25</b></label>
-                <input type="range" id="sl-d" min="0" max="100" value="25" oninput="syncUI()">
-            </div>
-            <div class="slider-group">
-                <label>左 (LEFT) <b id="val-l">0.25</b></label>
-                <input type="range" id="sl-l" min="0" max="100" value="25" oninput="syncUI()">
-            </div>
+            <div class="slider-group"><label>向上概率 <b id="val-u">0.25</b></label><input type="range" id="sl-u" oninput="sync()"></div>
+            <div class="slider-group"><label>向右概率 <b id="val-r">0.25</b></label><input type="range" id="sl-r" oninput="sync()"></div>
+            <div class="slider-group"><label>向下概率 <b id="val-d">0.25</b></label><input type="range" id="sl-d" oninput="sync()"></div>
+            <div class="slider-group"><label>向左概率 <b id="val-l">0.25</b></label><input type="range" id="sl-l" oninput="sync()"></div>
         </div>
 
         <div class="btn-stack">
-            <button class="btn-r" onclick="startRun('random')">独行龟</button>
-            <button class="btn-f" onclick="startRun('follow')">随行龟</button>
-            <button class="btn-s" onclick="startRun('smart')">智慧龟</button>
+            <button class="btn-r" onclick="run('random')">独行龟模式</button>
+            <button class="btn-f" onclick="run('follow')">随行龟模式</button>
+            <button class="btn-s" onclick="run('smart')">智慧龟模式</button>
         </div>
+        
+        <div style="margin-top:auto;"><select id="speed"><option value="80">速度：标准</option><option value="20">速度：快速</option><option value="1">速度：瞬间</option></select></div>
     </div>
 
-    <div id="view-panel">
-        <div id="msg-log"></div>
-        <canvas id="world" width="720" height="240"></canvas>
-        
-        <select id="playback-speed">
-            <option value="100">演示速度：标准</option>
-            <option value="30">演示速度：快速</option>
-            <option value="1">演示速度：瞬间回放</option>
-        </select>
-
-        <div class="legend">
-            ● 黑色格：悬崖（掉入回起点） | ● 橙色格：终点宝藏 <br>
-            智慧逻辑：不预判悬崖位置。若坠崖，则清空路径记忆并强制首步向上。
+    <div id="display-main">
+        <div id="msg-status"></div>
+        <div id="stage-row">
+            <div id="canvas-area"><canvas id="world" width="720" height="240"></canvas></div>
+            <div id="log-area"><h4>实时路径遥测数据</h4><div id="path-list"></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('world');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.getElementById('world'), ctx = canvas.getContext('2d'), logList = document.getElementById('path-list');
     const COLS = 12, ROWS = 4, CELL = 60;
-    
-    let currentPos = {x:0, y:3}, pathHistory = [], playbackTimer = null;
+    let pos = {x:0, y:3}, history = [], timer = null, turtleColor = '#00b894';
 
-    function syncUI(u, r, d, l) {
-        if(u !== undefined) {
-            document.getElementById('sl-u').value = u * 100;
-            document.getElementById('sl-r').value = r * 100;
-            document.getElementById('sl-d').value = d * 100;
-            document.getElementById('sl-l').value = l * 100;
-        }
-        const sliders = ['u','r','d','l'].map(k => parseInt(document.getElementById('sl-'+k).value));
-        const total = sliders.reduce((a, b) => a + b) || 1;
-        ['u','r','d','l'].forEach((k, i) => {
-            document.getElementById('val-'+k).innerText = (sliders[i]/total).toFixed(2);
+    // 绘制一只可爱矢量乌龟的函数
+    function drawCuteTurtle(x, y, color) {
+        ctx.save();
+        ctx.translate(x * CELL + CELL/2, y * CELL + CELL/2);
+        
+        // 四肢
+        ctx.fillStyle = color;
+        [[-15, -15], [15, -15], [-15, 10], [15, 10]].forEach(p => {
+            ctx.beginPath(); ctx.ellipse(p[0], p[1], 6, 4, Math.PI/4, 0, Math.PI*2); ctx.fill();
         });
+
+        // 龟壳
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0,0,0,0.2)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 龟壳纹理
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
+        ctx.moveTo(0, -10); ctx.lineTo(0, 10);
+        ctx.stroke();
+
+        // 头部
+        ctx.beginPath();
+        ctx.arc(0, -22, 10, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // 眼睛
+        ctx.fillStyle = "white";
+        ctx.beginPath(); ctx.arc(-4, -24, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -24, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "black";
+        ctx.beginPath(); ctx.arc(-4, -24, 1.2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -24, 1.2, 0, Math.PI*2); ctx.fill();
+
+        ctx.restore();
+    }
+
+    function sync() {
+        let v = ['u','r','d','l'].map(k => parseInt(document.getElementById('sl-'+k).value || 25));
+        let total = v.reduce((a,b)=>a+b) || 1;
+        ['u','r','d','l'].forEach((k,i) => document.getElementById('val-'+k).innerText = (v[i]/total).toFixed(2));
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
         for(let r=0; r<ROWS; r++){
             for(let c=0; c<COLS; c++){
-                ctx.strokeStyle = "#f1f2f6"; ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
+                ctx.strokeStyle="#f1f2f6"; ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
                 if(r===3 && c>0 && c<11) { ctx.fillStyle="#2d3436"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
                 if(r===3 && c===11) { ctx.fillStyle="#f39c12"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
             }
         }
-        ctx.beginPath(); ctx.setLineDash([4, 2]); ctx.strokeStyle="#cbd5e0";
-        pathHistory.forEach((p, i) => {
-            if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL);
-            else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL);
-        });
+        // 绘制轨迹
+        ctx.beginPath(); ctx.setLineDash([4,2]); ctx.strokeStyle="#cbd5e0";
+        history.forEach((p,i) => { if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL); else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL); });
         ctx.stroke(); ctx.setLineDash([]);
-        ctx.font = "34px Arial"; ctx.textAlign="center";
-        ctx.fillText("🐢", (currentPos.x+.5)*CELL, (currentPos.y+.5)*CELL+12);
+        
+        // 绘制矢量小乌龟
+        drawCuteTurtle(pos.x, pos.y, turtleColor);
     }
 
-    function getStepDecision(mode, curP, curV, isRecovery) {
-        // 智慧龟重生引导
-        if(mode === 'smart' && isRecovery) return {x:0, y:-1};
-
-        const weights = ['val-u','val-r','val-d','val-l'].map(id => parseFloat(document.getElementById(id).innerText));
-        let opts = [{x:0,y:-1,p:weights[0]},{x:1,y:0,p:weights[1]},{x:0,y:1,p:weights[2]},{x:-1,y:0,p:weights[3]}];
-
-        if(mode === 'smart') {
-            opts.forEach(o => {
-                let nx = curP.x + o.x, ny = curP.y + o.y;
-                let v = curV[`${nx},${ny}`] || 0;
-                // 记忆惩罚
-                o.p *= Math.pow(0.15, v); 
-                if(nx<0 || nx>=COLS || ny<0 || ny>=ROWS) o.p = 0;
-            });
+    function getDir(mode, cp, cv, isR) {
+        if(mode==='smart' && isR) return {x:0, y:-1};
+        const w = ['val-u','val-r','val-d','val-l'].map(id => parseFloat(document.getElementById(id).innerText));
+        let opts = [{x:0,y:-1,p:w[0]},{x:1,y:0,p:w[1]},{x:0,y:1,p:w[2]},{x:-1,y:0,p:w[3]}];
+        if(mode==='smart') {
+            opts.forEach(o => { o.p *= Math.pow(0.12, cv[`${cp.x+o.x},${cp.y+o.y}`]||0); if(cp.x+o.x<0||cp.x+o.x>=COLS||cp.y+o.y<0||cp.y+o.y>=ROWS) o.p=0; });
         }
-
         let sum = opts.reduce((a,b)=>a+b.p, 0);
-        if(sum <= 0) return {x:1, y:0}; // 默认右移
+        if(sum<=0) return opts[1];
         let rand = Math.random()*sum;
-        for(let o of opts) { if(rand <= o.p) return o; rand -= o.p; }
+        for(let o of opts) { if(rand<=o.p) return o; rand-=o.p; }
         return opts[1];
     }
 
-    function preCalculatePath(mode) {
-        const minSteps = mode==='random' ? 2000 : (mode==='follow'? 500 : 0);
-        const maxSteps = mode==='random' ? 3000 : (mode==='follow'? 1000 : 8000);
-        
-        for(let attempt=0; attempt<5000; attempt++) {
-            let tPos={x:0,y:3}, tSteps=0, tFails=0, tHist=[{p:{...tPos}, f:0}], tVis={}, isRecovery=true;
-            
-            while(tSteps < 8000) {
-                let m = getStepDecision(mode, tPos, tVis, isRecovery);
-                isRecovery = false;
-                let nx=tPos.x+m.x, ny=tPos.y+m.y;
-                
+    function preCalc(mode) {
+        const min = mode==='random' ? 1500 : (mode==='follow'? 500 : 0);
+        const max = mode==='random' ? 2000 : (mode==='follow'? 1000 : 100); 
+        for(let a=0; a<8000; a++) {
+            let tp={x:0,y:3}, ts=0, tf=0, th=[{p:{...tp}, f:0}], tv={}, isR=true;
+            while(ts < 8000) {
+                let m = getDir(mode, tp, tv, isR); isR = false;
+                let nx=tp.x+m.x, ny=tp.y+m.y;
                 if(nx>=0 && nx<COLS && ny>=0 && ny<ROWS) {
-                    if(ny===3 && nx>0 && nx<11) { 
-                        tPos={x:0,y:3}; 
-                        tFails++;
-                        if(mode === 'smart') tVis = {}; // 智慧龟坠崖清空记忆
-                        isRecovery = true; 
-                    } else {
-                        tPos={x:nx, y:ny};
-                        tVis[`${nx},${ny}`] = (tVis[`${nx},${ny}`]||0)+1;
-                    }
-                    tSteps++;
-                    tHist.push({p:{...tPos}, f:tFails});
-                } else {
-                    tSteps++; // 撞墙计步
-                    tHist.push({p:{...tPos}, f:tFails});
-                }
-                
-                if(tPos.x===11 && tPos.y===3) break;
+                    if(ny===3 && nx>0 && nx<11) { tp={x:0,y:3}; tf++; if(mode==='smart') tv={}; isR=true; }
+                    else { tp={x:nx, y:ny}; tv[`${nx},${ny}`]=(tv[`${nx},${ny}`]||0)+1; }
+                    ts++; th.push({p:{...tp}, f:tf});
+                } else { ts++; th.push({p:{...tp}, f:tf}); }
+                if(tp.x===11 && tp.y===3) break;
             }
-            // 检查步数是否达标
-            if(tSteps >= minSteps && tSteps <= maxSteps) return tHist;
-            // 智慧龟不限步数，只要到了就行
-            if(mode === 'smart' && tPos.x===11) return tHist;
+            if(ts >= min && ts <= max) return th;
         }
         return null;
     }
 
-    function startRun(mode) {
-        if(playbackTimer) clearInterval(playbackTimer);
-        document.getElementById('msg-log').innerText = "正在演算随机路径...";
+    function run(m) {
+        if(timer) clearInterval(timer);
+        document.getElementById('msg-status').innerText = "正在演算最佳路径...";
+        logList.innerHTML = "";
         
-        if(mode==='random') syncUI(0.25, 0.25, 0.25, 0.25);
-        else syncUI(0.2, 0.4, 0.2, 0.2);
-
-        document.getElementById('mode-text').innerText = mode.toUpperCase() + " 模式";
+        const config = { 'random': '#ff7675', 'follow': '#00b894', 'smart': '#74b9ff' };
+        turtleColor = config[m];
+        document.getElementById('mode-text').innerText = "系统状态：正在运行";
+        if(m==='random') sync(25,25,25,25); else sync(20,40,20,20);
 
         setTimeout(() => {
-            const calculatedData = preCalculatePath(mode);
-            document.getElementById('msg-log').innerText = "";
-            
-            if(!calculatedData) { 
-                alert("演算超时，请重试或微调权重（当前权重可能导致死循环）"); 
-                return; 
-            }
-
-            let stepIdx = 0;
-            pathHistory = [];
-            playbackTimer = setInterval(() => {
-                const currentData = calculatedData[stepIdx];
-                currentPos = currentData.p;
-                pathHistory.push(currentPos);
-                
-                document.getElementById('step-display').innerText = stepIdx;
-                document.getElementById('fail-display').innerText = "坠崖次数: " + currentData.f;
-                
+            const data = preCalc(m);
+            document.getElementById('msg-status').innerText = "";
+            if(!data) return alert("演算超时，请重试");
+            let i = 0; history = [];
+            timer = setInterval(() => {
+                const cur = data[i]; pos = cur.p; history.push(pos);
+                document.getElementById('step-display').innerText = i;
+                document.getElementById('fail-display').innerText = "坠崖次数: " + cur.f;
+                const item = document.createElement('div'); item.className = 'log-item';
+                item.innerHTML = `<span style="color:${turtleColor}">Step ${i}</span><span>Pos: [${pos.x}, ${pos.y}]</span>`;
+                logList.prepend(item);
                 draw();
-                stepIdx++;
-                
-                if(stepIdx >= calculatedData.length) {
-                    clearInterval(playbackTimer);
-                    setTimeout(() => alert("任务达成！"), 50);
-                }
-            }, document.getElementById('playback-speed').value);
+                if(++i >= data.length) { clearInterval(timer); document.getElementById('mode-text').innerText = "任务完成"; }
+            }, document.getElementById('speed').value);
         }, 50);
     }
 
-    // 初始化
-    syncUI();
-    draw();
+    sync(); draw();
 </script>
 </body>
 </html>
