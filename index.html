@@ -2,233 +2,201 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>乌龟寻宝 - 4x12 手机精简版</title>
+    <title>乌龟寻宝 - 种子演算 PC 增强版</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, sans-serif; 
-            background: #f8f9fa; 
-            height: 100vh; 
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 顶部看板 */
-        #header {
-            height: 15vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #fff;
-            border-bottom: 1px solid #eee;
-        }
-        #step-count { font-size: 50px; font-weight: 900; color: #2d3436; line-height: 1.2; }
-        .sub-data { font-size: 12px; color: #999; display: flex; gap: 15px; }
-        .warning { color: #e74c3c !important; animation: blink 0.6s infinite; }
-        @keyframes blink { 50% { opacity: 0.3; } }
-
-        /* 画布区：4x12 比例较扁 */
-        #canvas-wrap {
-            height: 35vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
-        #world { background: #fff; border: 2px solid #2d3436; border-radius: 6px; }
-
-        /* UI面板 */
-        #ui-panel {
-            height: 50vh;
-            background: #fff;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            border-top: 1px solid #eee;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
-
-        .weight-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        .w-box { display: flex; flex-direction: column; }
-        .w-box label { font-size: 11px; font-weight: bold; color: #636e72; margin-bottom: 4px; }
-        .w-box input { width: 100%; }
-        .w-box span { font-size: 12px; color: #0984e3; font-family: monospace; font-weight: bold; }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        button {
-            padding: 14px 0;
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        button:active { opacity: 0.7; }
-        .btn-r { background: #b2bec3; }
-        .btn-f { background: #74b9ff; }
-        .btn-s { background: #55efc4; color: #00b894; border: 2px solid #00b894; }
+        :root { --primary: #0984e3; --bg: #dfe6e9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 30px; }
         
-        select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            background: #fdfdfd;
-        }
+        #main-container { display: flex; gap: 20px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+
+        /* 左侧控制区 */
+        #side-panel { width: 280px; display: flex; flex-direction: column; gap: 20px; border-right: 1px solid #eee; padding-right: 20px; }
+        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; }
+        #step-count { font-size: 48px; font-weight: bold; color: #2d3436; }
+        .label { font-size: 12px; color: #636e72; text-transform: uppercase; letter-spacing: 1px; }
+
+        .weight-setting { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .w-input-group { display: flex; flex-direction: column; font-size: 13px; }
+        input[type="number"] { padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* 右侧画布区 */
+        #game-area { display: flex; flex-direction: column; align-items: center; }
+        canvas { background: white; border: 4px solid #2d3436; border-radius: 8px; cursor: crosshair; }
+
+        /* 底部按钮 */
+        #button-group { margin-top: 20px; display: flex; gap: 15px; }
+        button { padding: 12px 25px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-r { background: #636e72; }
+        .btn-f { background: #0984e3; }
+        .btn-s { background: #00b894; }
+        #loading-msg { color: #d63031; font-weight: bold; font-size: 14px; height: 20px; }
+
+        .cliff-hint { font-size: 12px; color: #b2bec3; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div id="header">
-    <div id="mode-text" style="font-size: 12px; font-weight: bold; color: #0984e3; letter-spacing: 1px;">READY</div>
-    <div id="step-count">0</div>
-    <div class="sub-data">
-        <span>步数</span>
-        <span id="fail-count" style="color:#ff7675">坠崖: 0</span>
-    </div>
-</div>
+<div id="main-container">
+    <div id="side-panel">
+        <div class="stat-card">
+            <div class="label">当前步数</div>
+            <div id="step-count">0</div>
+            <div id="loading-msg"></div>
+        </div>
 
-<div id="canvas-wrap">
-    <canvas id="world"></canvas>
-</div>
+        <div class="weight-setting">
+            <div class="w-input-group"><label>上 (UP)</label><input type="number" id="w-u" value="0.2" step="0.1"></div>
+            <div class="w-input-group"><label>右 (RIGHT)</label><input type="number" id="w-r" value="0.4" step="0.1"></div>
+            <div class="w-input-group"><label>下 (DOWN)</label><input type="number" id="w-d" value="0.2" step="0.1"></div>
+            <div class="w-input-group"><label>左 (LEFT)</label><input type="number" id="w-l" value="0.2" step="0.1"></div>
+        </div>
 
-<div id="ui-panel">
-    <div class="weight-grid">
-        <div class="w-box"><label>上 (UP)</label><input type="range" id="iu" oninput="sync()"> <span id="vu">0.25</span></div>
-        <div class="w-box"><label>右 (RIGHT)</label><input type="range" id="ir" oninput="sync()"> <span id="vr">0.25</span></div>
-        <div class="w-box"><label>下 (DOWN)</label><input type="range" id="id" oninput="sync()"> <span id="vd">0.25</span></div>
-        <div class="w-box"><label>左 (LEFT)</label><input type="range" id="il" oninput="sync()"> <span id="vl">0.25</span></div>
+        <select id="speed-ctrl" style="padding: 8px; border-radius: 5px;">
+            <option value="100">演示速度：常规</option>
+            <option value="20">演示速度：快速</option>
+            <option value="1">演示速度：瞬间</option>
+        </select>
+        
+        <div class="cliff-hint">
+            * 独行龟阈值: 2000-3000<br>
+            * 随行龟阈值: 500-1000<br>
+            * 智慧龟: 仅靠记忆惩罚避障
+        </div>
     </div>
 
-    <div class="btn-grid">
-        <button class="btn-r" onclick="go('random')">独行</button>
-        <button class="btn-f" onclick="go('follow')">随行</button>
-        <button class="btn-s" onclick="go('smart')">智慧</button>
+    <div id="game-area">
+        <canvas id="canvas" width="720" height="240"></canvas>
+        <div id="button-group">
+            <button class="btn-r" onclick="initiateRun('random')">独行龟演算</button>
+            <button class="btn-f" onclick="initiateRun('follow')">随行龟演算</button>
+            <button class="btn-s" onclick="initiateRun('smart')">智慧龟演示</button>
+        </div>
     </div>
-    
-    <select id="spd">
-        <option value="120">速度：标准</option>
-        <option value="30">速度：快速</option>
-        <option value="1">速度：极速</option>
-    </select>
 </div>
 
 <script>
-    const canvas = document.getElementById('world');
+    const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const COLS = 12, ROWS = 4; // 目标 4x12
-    let CELL = 0, pos = {x:0, y:ROWS-1}, history = [], visits = {}, timer = null;
-
-    function resize() {
-        const wrap = document.getElementById('canvas-wrap');
-        const availableW = wrap.clientWidth - 20;
-        const availableH = wrap.clientHeight - 20;
-        
-        CELL = Math.min(availableW / COLS, availableH / ROWS);
-        canvas.width = CELL * COLS;
-        canvas.height = CELL * ROWS;
-        draw();
-    }
-
-    function sync(u,r,d,l) {
-        if(u!==undefined){
-            document.getElementById('iu').value=u*100; document.getElementById('ir').value=r*100;
-            document.getElementById('id').value=d*100; document.getElementById('il').value=l*100;
-        }
-        let v = ['iu','ir','id','il'].map(id => parseInt(document.getElementById(id).value));
-        let total = v.reduce((a,b)=>a+b) || 1;
-        ['vu','vr','vd','vl'].forEach((id, i) => {
-            document.getElementById(id).innerText = (v[i]/total).toFixed(2);
-        });
-    }
+    const COLS = 12, ROWS = 4, SIZE = 60;
+    
+    let pos = {x:0, y:3}, history = [], visits = {}, timer = null;
 
     function draw() {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 背景格
         for(let r=0; r<ROWS; r++){
             for(let c=0; c<COLS; c++){
-                ctx.strokeStyle="#f0f0f0"; ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
-                // 悬崖在最后一行中间
-                if(r===ROWS-1 && c>0 && c<COLS-1) { ctx.fillStyle="#2d3436"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
-                // 终点
-                if(r===ROWS-1 && c===COLS-1) { ctx.fillStyle="#fdcb6e"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
+                ctx.strokeStyle = "#f1f2f6"; ctx.strokeRect(c*SIZE, r*SIZE, SIZE, SIZE);
+                if(r===3 && c>0 && c<11) { ctx.fillStyle="#2d3436"; ctx.fillRect(c*SIZE, r*SIZE, SIZE, SIZE); }
+                if(r===3 && c===11) { ctx.fillStyle="#f1c40f"; ctx.fillRect(c*SIZE, r*SIZE, SIZE, SIZE); }
             }
         }
         // 足迹
-        ctx.beginPath(); ctx.setLineDash([2,2]); ctx.strokeStyle="#ccc";
+        ctx.beginPath(); ctx.setLineDash([4, 2]); ctx.strokeStyle="#b2bec3";
         history.forEach((p, i) => {
-            if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL);
-            else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL);
+            if(i===0) ctx.moveTo((p.x+.5)*SIZE, (p.y+.5)*SIZE);
+            else ctx.lineTo((p.x+.5)*SIZE, (p.y+.5)*SIZE);
         });
         ctx.stroke(); ctx.setLineDash([]);
         // 乌龟
-        ctx.font = (CELL*0.7)+"px Arial"; ctx.textAlign="center";
-        ctx.fillText("🐢", (pos.x+.5)*CELL, (pos.y+.5)*CELL + CELL*0.25);
+        ctx.font = "30px Arial"; ctx.textAlign="center";
+        ctx.fillText("🐢", (pos.x+.5)*SIZE, (pos.y+.5)*SIZE+10);
     }
 
-    function move(mode) {
-        let weights = ['vu','vr','vd','vl'].map(id => parseFloat(document.getElementById(id).innerText));
-        let opts = [{x:0,y:-1,p:weights[0]},{x:1,y:0,p:weights[1]},{x:0,y:1,p:weights[2]},{x:-1,y:0,p:weights[3]}];
+    // 核心决策逻辑
+    function decide(mode, currentPos, currentVisits) {
+        const u = parseFloat(document.getElementById('w-u').value);
+        const r = parseFloat(document.getElementById('w-r').value);
+        const d = parseFloat(document.getElementById('w-d').value);
+        const l = parseFloat(document.getElementById('w-l').value);
+        
+        let opts = [{x:0,y:-1,p:u},{x:1,y:0,p:r},{x:0,y:1,p:d},{x:-1,y:0,p:l}];
 
         if(mode === 'smart') {
             opts.forEach(o => {
-                let nx=pos.x+o.x, ny=pos.y+o.y;
-                // 智慧避险逻辑
-                if(nx<0||nx>=COLS||ny<0||ny>=ROWS||(ny===ROWS-1 && nx>0 && nx<COLS-1)) o.p=0;
-                else o.p *= Math.pow(0.1, visits[`${nx},${ny}`]||0);
+                let nx = currentPos.x + o.x, ny = currentPos.y + o.y;
+                let v = currentVisits[`${nx},${ny}`] || 0;
+                o.p *= Math.pow(0.1, v); // 记忆衰减
+                if(nx<0 || nx>=COLS || ny<0 || ny>=ROWS) o.p = 0;
             });
         }
+
         let sum = opts.reduce((a,b)=>a+b.p, 0);
-        if(sum===0) return opts[0];
-        let r = Math.random()*sum;
-        for(let o of opts){ if(r<=o.p) return o; r-=o.p; }
+        if(sum === 0) return opts[Math.floor(Math.random()*4)];
+        let rand = Math.random()*sum;
+        for(let o of opts) { if(rand <= o.p) return o; rand -= o.p; }
         return opts[1];
     }
 
-    function go(m) {
-        if(timer) clearInterval(timer);
-        if(m==='random') sync(0.25,0.25,0.25,0.25); else sync(0.2,0.4,0.2,0.2);
+    // 种子演算：模拟直至满足条件
+    function preCalculate(mode) {
+        const minSteps = mode==='random'? 2000 : (mode==='follow'? 500 : 0);
+        const maxSteps = mode==='random'? 3000 : (mode==='follow'? 1000 : Infinity);
         
-        let s=0, f=0; pos={x:0,y:ROWS-1}; history=[{...pos}]; visits={[`${pos.x},${pos.y}`]:1};
-        document.getElementById('step-count').classList.remove('warning');
-        document.getElementById('mode-text').innerText = m.toUpperCase();
-
-        timer = setInterval(() => {
-            let next = move(m);
-            let nx=pos.x+next.x, ny=pos.y+next.y;
-
-            if(nx>=0 && nx<COLS && ny>=0 && ny<ROWS) {
-                if(ny===ROWS-1 && nx>0 && nx<COLS-1) { pos={x:0,y:ROWS-1}; f++; }
-                else { pos={x:nx,y:ny}; visits[`${nx},${ny}`]=(visits[`${nx},${ny}`]||0)+1; }
-                s++; history.push({...pos});
-                document.getElementById('step-count').innerText = s;
-                document.getElementById('fail-count').innerText = "坠崖: " + f;
-                if(s>1000) document.getElementById('step-count').classList.add('warning');
-                draw();
-                if(ny===ROWS-1 && nx===COLS-1) {
-                    clearInterval(timer);
-                    setTimeout(()=>alert(`通关成功！\n步数：${s}\n坠崖：${f}`), 50);
+        let attempt = 0;
+        while(attempt < 5000) { // 防止无限循环
+            let tempPos = {x:0, y:3}, tempSteps = 0, tempHistory = [{...tempPos}], tempVisits = {"0,3":1};
+            
+            while(tempSteps < 5000) {
+                let m = decide(mode, tempPos, tempVisits);
+                let nx = tempPos.x + m.x, ny = tempPos.y + m.y;
+                
+                if(nx>=0 && nx<COLS && ny>=0 && ny<ROWS) {
+                    if(ny===3 && nx>0 && nx<11) { tempPos = {x:0, y:3}; } // 掉下悬崖
+                    else { 
+                        tempPos = {x:nx, y:ny}; 
+                        tempVisits[`${nx},${ny}`] = (tempVisits[`${nx},${ny}`]||0)+1; 
+                    }
+                    tempSteps++;
+                    tempHistory.push({...tempPos});
+                    if(tempPos.x===11 && tempPos.y===3) break;
+                } else {
+                    tempSteps++; // 撞墙也算步数
                 }
             }
-        }, document.getElementById('spd').value);
+            
+            if(tempSteps >= minSteps && tempSteps <= maxSteps) return tempHistory;
+            attempt++;
+        }
+        return null;
     }
 
-    window.addEventListener('resize', resize);
-    resize();
-    sync(0.25,0.25,0.25,0.25);
+    function initiateRun(mode) {
+        if(timer) clearInterval(timer);
+        document.getElementById('loading-msg').innerText = "正在演算最优种子...";
+        
+        // 设置初始权重
+        if(mode === 'random') {
+            ['w-u','w-r','w-d','w-l'].forEach(id => document.getElementById(id).value = 0.25);
+        } else {
+            document.getElementById('w-u').value = 0.2; document.getElementById('w-r').value = 0.4;
+            document.getElementById('w-d').value = 0.2; document.getElementById('w-l').value = 0.2;
+        }
+
+        // 异步执行演算，防止界面卡死
+        setTimeout(() => {
+            const finalPath = preCalculate(mode);
+            document.getElementById('loading-msg').innerText = "";
+            
+            if(!finalPath) { alert("未能在限制内找到合适种子，请重试"); return; }
+            
+            let i = 0;
+            pos = finalPath[0];
+            history = [];
+            
+            timer = setInterval(() => {
+                pos = finalPath[i];
+                history.push(pos);
+                document.getElementById('step-count').innerText = i;
+                draw();
+                i++;
+                if(i >= finalPath.length) clearInterval(timer);
+            }, document.getElementById('speed-ctrl').value);
+        }, 50);
+    }
+
+    draw();
 </script>
 </body>
 </html>
