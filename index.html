@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>乌龟寻宝 - 全屏手机版</title>
+    <title>乌龟寻宝 - 4x12 手机精简版</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { 
             font-family: -apple-system, sans-serif; 
             background: #f8f9fa; 
             height: 100vh; 
-            overflow: hidden; /* 核心：禁止整页滚动 */
+            overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
 
-        /* 顶部数据：占用约 15vh */
+        /* 顶部看板 */
         #header {
             height: 15vh;
             display: flex;
@@ -25,26 +25,26 @@
             background: #fff;
             border-bottom: 1px solid #eee;
         }
-        #step-count { font-size: 48px; font-weight: 900; color: #2d3436; }
-        .sub-data { font-size: 12px; color: #999; display: flex; gap: 10px; }
-        .warning { color: #e74c3c !important; animation: flash 0.5s infinite; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        #step-count { font-size: 50px; font-weight: 900; color: #2d3436; line-height: 1.2; }
+        .sub-data { font-size: 12px; color: #999; display: flex; gap: 15px; }
+        .warning { color: #e74c3c !important; animation: blink 0.6s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
 
-        /* 画布区：占用约 45vh */
+        /* 画布区：4x12 比例较扁 */
         #canvas-wrap {
-            height: 45vh;
+            height: 35vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 5px;
+            padding: 10px;
         }
-        #world { background: #fff; border: 3px solid #2d3436; border-radius: 8px; }
+        #world { background: #fff; border: 2px solid #2d3436; border-radius: 6px; }
 
-        /* 控制面板：占用约 40vh */
+        /* UI面板 */
         #ui-panel {
-            height: 40vh;
+            height: 50vh;
             background: #fff;
-            padding: 10px 15px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -52,53 +52,52 @@
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
 
-        /* 滑块网格 */
         .weight-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
         }
         .w-box { display: flex; flex-direction: column; }
-        .w-box label { font-size: 11px; font-weight: bold; color: #636e72; }
-        .w-box input { width: 100%; margin: 4px 0; }
-        .w-box span { font-size: 12px; color: #0984e3; font-family: monospace; }
+        .w-box label { font-size: 11px; font-weight: bold; color: #636e72; margin-bottom: 4px; }
+        .w-box input { width: 100%; }
+        .w-box span { font-size: 12px; color: #0984e3; font-family: monospace; font-weight: bold; }
 
-        /* 按钮组 */
         .btn-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-top: 5px;
+            gap: 10px;
+            margin: 10px 0;
         }
         button {
-            padding: 12px 0;
+            padding: 14px 0;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: white;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
         }
+        button:active { opacity: 0.7; }
         .btn-r { background: #b2bec3; }
         .btn-f { background: #74b9ff; }
-        .btn-s { background: #55efc4; color: #00b894; border: 1.5px solid #00b894; }
+        .btn-s { background: #55efc4; color: #00b894; border: 2px solid #00b894; }
         
         select {
             width: 100%;
-            padding: 8px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 10px;
             border: 1px solid #ddd;
-            font-size: 13px;
-            margin-top: 5px;
+            font-size: 14px;
+            background: #fdfdfd;
         }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div id="mode-text" style="font-size: 12px; font-weight: bold; color: #0984e3;">READY</div>
+    <div id="mode-text" style="font-size: 12px; font-weight: bold; color: #0984e3; letter-spacing: 1px;">READY</div>
     <div id="step-count">0</div>
     <div class="sub-data">
-        <span>当前步数</span>
+        <span>步数</span>
         <span id="fail-count" style="color:#ff7675">坠崖: 0</span>
     </div>
 </div>
@@ -116,14 +115,14 @@
     </div>
 
     <div class="btn-grid">
-        <button class="btn-r" onclick="go('random')">独行龟</button>
-        <button class="btn-f" onclick="go('follow')">随行龟</button>
-        <button class="btn-s" onclick="go('smart')">智慧龟</button>
+        <button class="btn-r" onclick="go('random')">独行</button>
+        <button class="btn-f" onclick="go('follow')">随行</button>
+        <button class="btn-s" onclick="go('smart')">智慧</button>
     </div>
     
     <select id="spd">
         <option value="120">速度：标准</option>
-        <option value="30">速度：倍速</option>
+        <option value="30">速度：快速</option>
         <option value="1">速度：极速</option>
     </select>
 </div>
@@ -131,23 +130,20 @@
 <script>
     const canvas = document.getElementById('world');
     const ctx = canvas.getContext('2d');
-    const COLS = 8, ROWS = 6; // 为了竖屏美观，缩小格数至 8x6
+    const COLS = 12, ROWS = 4; // 目标 4x12
     let CELL = 0, pos = {x:0, y:ROWS-1}, history = [], visits = {}, timer = null;
 
-    // 动态适配画布大小
     function resize() {
         const wrap = document.getElementById('canvas-wrap');
         const availableW = wrap.clientWidth - 20;
         const availableH = wrap.clientHeight - 20;
         
-        // 计算最佳单元格大小
         CELL = Math.min(availableW / COLS, availableH / ROWS);
         canvas.width = CELL * COLS;
         canvas.height = CELL * ROWS;
         draw();
     }
 
-    // 同步滑块与数值
     function sync(u,r,d,l) {
         if(u!==undefined){
             document.getElementById('iu').value=u*100; document.getElementById('ir').value=r*100;
@@ -165,22 +161,22 @@
         for(let r=0; r<ROWS; r++){
             for(let c=0; c<COLS; c++){
                 ctx.strokeStyle="#f0f0f0"; ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
-                // 悬崖在最后一行 (经典 CliffWalking)
+                // 悬崖在最后一行中间
                 if(r===ROWS-1 && c>0 && c<COLS-1) { ctx.fillStyle="#2d3436"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
-                // 终点在右下角
+                // 终点
                 if(r===ROWS-1 && c===COLS-1) { ctx.fillStyle="#fdcb6e"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
             }
         }
-        // 绘制足迹
+        // 足迹
         ctx.beginPath(); ctx.setLineDash([2,2]); ctx.strokeStyle="#ccc";
         history.forEach((p, i) => {
-            let sx=(p.x+.5)*CELL, sy=(p.y+.5)*CELL;
-            if(i===0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+            if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL);
+            else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL);
         });
         ctx.stroke(); ctx.setLineDash([]);
         // 乌龟
-        ctx.font = (CELL*0.6)+"px Arial"; ctx.textAlign="center";
-        ctx.fillText("🐢", (pos.x+.5)*CELL, (pos.y+.5)*CELL + CELL*0.2);
+        ctx.font = (CELL*0.7)+"px Arial"; ctx.textAlign="center";
+        ctx.fillText("🐢", (pos.x+.5)*CELL, (pos.y+.5)*CELL + CELL*0.25);
     }
 
     function move(mode) {
@@ -190,7 +186,7 @@
         if(mode === 'smart') {
             opts.forEach(o => {
                 let nx=pos.x+o.x, ny=pos.y+o.y;
-                // 智慧：避开悬崖和越界
+                // 智慧避险逻辑
                 if(nx<0||nx>=COLS||ny<0||ny>=ROWS||(ny===ROWS-1 && nx>0 && nx<COLS-1)) o.p=0;
                 else o.p *= Math.pow(0.1, visits[`${nx},${ny}`]||0);
             });
@@ -224,10 +220,7 @@
                 draw();
                 if(ny===ROWS-1 && nx===COLS-1) {
                     clearInterval(timer);
-                    // 高亮最终路径
-                    ctx.strokeStyle="#00b894"; ctx.lineWidth=4; 
-                    ctx.strokeRect(pos.x*CELL, pos.y*CELL, CELL, CELL);
-                    setTimeout(()=>alert(`任务完成！步数：${s}`), 50);
+                    setTimeout(()=>alert(`通关成功！\n步数：${s}\n坠崖：${f}`), 50);
                 }
             }
         }, document.getElementById('spd').value);
