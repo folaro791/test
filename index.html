@@ -4,98 +4,124 @@
     <meta charset="UTF-8">
     <title>乌龟寻宝演化模拟</title>
     <style>
-        :root { --red: #ff7675; --green: #00b894; --blue: #74b9ff; --panel: #1e272e; --active-color: #00b894; }
+        :root { 
+            --red: #ff7675; --green: #00b894; --blue: #0984e3; --panel: #1e272e; --active-color: #00b894; 
+            --bg-body: #F0F3F7;
+            --bg-panel: rgba(255, 255, 255, 0.8);
+            --bg-terminal: #1c252e;
+            --text-main: #2d3436;
+            --text-sec: #636e72;
+            --border-soft: #e0e6ed;
+            --sh-soft: 0 10px 30px rgba(160, 175, 190, 0.15);
+            --sh-inset: inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.8);
+        }
         * { box-sizing: border-box; } 
 
         body { 
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
-            background: #dfe6e9; display: flex; justify-content: center; align-items: center;
+            background: var(--bg-body); display: flex; justify-content: center; align-items: center;
             padding: 1vh; margin: 0; height: 100vh; overflow: hidden; 
+            background-image: radial-gradient(#dbe1e8 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
         #app-container { 
-            background: #ffffff; padding: 1.5vw; border-radius: 24px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); 
+            background: var(--bg-panel); padding: 1.5vw; border-radius: 30px; 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
             display: flex; gap: 1.5vw; width: 98vw; height: 96vh; min-height: 0;
         }
         
         #left-panel { 
-            flex: 0 0 22%; border-right: 1px solid #f1f2f6; padding-right: 1.2vw; 
+            flex: 0 0 22%; border-right: 1px solid var(--border-soft); padding-right: 1.2vw; 
             display: flex; flex-direction: column; 
             justify-content: space-between; overflow: hidden;
         }
 
         #log-area { 
-            flex: 0 0 22%; background: var(--panel); border-radius: 20px; padding: 1.2vw; 
-            display: flex; flex-direction: column; border: 2px solid var(--active-color); flex-shrink: 0; 
+            flex: 0 0 22%; background: var(--bg-terminal); border-radius: 20px; padding: 1.2vw; 
+            display: flex; flex-direction: column; 
+            border: 2px solid var(--active-color); flex-shrink: 0; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
 
         #center-area { flex: 1; display: flex; flex-direction: column; gap: 1.5vh; min-width: 0; }
 
         .monitor-card { 
-            background: #f8f9fa; border-radius: 20px; padding: 2vh 1vw; margin-bottom: 1vh; 
-            border: 1px solid #e9ecef; text-align: center; 
+            background: #fff; border-radius: 20px; padding: 2vh 1vw; margin-bottom: 1.5vh; 
+            box-shadow: var(--sh-soft); text-align: center; 
         }
-        /* 更新为实时任务进度 */
-        .monitor-card h3 { margin: 0 0 1vh 0; font-size: clamp(12px, 1.4vh, 14px); color: #636e72; letter-spacing: 1px; }
+        .monitor-card h3 { margin: 0 0 1.5vh 0; font-size: clamp(12px, 1.5vh, 14px); color: var(--text-sec); letter-spacing: 2px; }
 
         .step-circle { 
-            width: clamp(60px, 11vh, 90px); height: clamp(60px, 11vh, 90px); 
-            border-radius: 50%; margin: 0 auto 1vh; 
+            width: clamp(70px, 12vh, 100px); height: clamp(70px, 12vh, 100px); 
+            border-radius: 50%; margin: 0 auto 1.5vh; 
             display: flex; align-items: center; justify-content: center; position: relative;
-            background: conic-gradient(var(--active-color) 0deg, #eee 0deg);
+            background: conic-gradient(var(--active-color) 0deg, #edf2f7 0deg);
+            box-shadow: var(--sh-inset);
         }
-        .step-circle::after {
-            content: ""; position: absolute; width: 80%; height: 80%; background: #f8f9fa; border-radius: 50%;
-        }
-        #step-display { font-size: clamp(18px, 3.5vh, 28px); font-weight: 900; color: #2d3436; z-index: 1; }
+        .step-circle::after { content: ""; position: absolute; width: 82%; height: 82%; background: #fff; border-radius: 50%; }
+        #step-display { font-size: clamp(22px, 4vh, 32px); font-weight: 800; color: var(--text-main); z-index: 1; }
         
         .status-dot {
-            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
             background: var(--active-color); margin-right: 8px;
-            box-shadow: 0 0 8px var(--active-color);
+            box-shadow: 0 0 10px var(--active-color);
             animation: pulse 1.5s infinite;
             vertical-align: middle;
         }
-        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
 
-        .detail-row { display: flex; align-items: center; justify-content: space-between; padding: 0.7vh 0; border-bottom: 1px dashed #ddd; font-size: clamp(10px, 1.2vh, 12px); color: #2d3436; }
+        .detail-row { display: flex; align-items: center; justify-content: space-between; padding: 0.8vh 0; border-bottom: 1px solid var(--border-soft); font-size: clamp(11px, 1.3vh, 13px); color: var(--text-main); }
 
         .config-section {
-            border: 1px solid #e1e8f0; border-radius: 18px; padding: 1.5vh 1vw 1vh; margin-bottom: 1vh;
-            background: #f1f2f6; position: relative;
+            border: 1px solid #fff; border-radius: 20px; padding: 2vh 1vw 1vh; margin-bottom: 1vh;
+            background: #fff; position: relative; box-shadow: var(--sh-soft); margin-top: 15px;
         }
         .config-label {
-            position: absolute; top: -10px; left: 15px; background: #fff;
-            padding: 0 8px; font-size: 10px; color: #95a5a6; font-weight: bold;
-            border: 1px solid #e1e8f0; border-radius: 10px;
+            position: absolute; top: -10px; left: 15px; background: var(--active-color);
+            padding: 2px 10px; font-size: 11px; color: #fff; font-weight: bold; border-radius: 10px;
         }
 
-        .slider-group { margin-bottom: 0.5vh; background: #fff; padding: 0.5vh 0.8vw; border-radius: 10px; border: 1px solid #edf2f7; }
-        .slider-group label { display: flex; justify-content: space-between; font-size: 10px; color: #636e72; margin-bottom: 2px; }
-        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--active-color); height: 12px; }
+        .slider-group { margin-bottom: 0.8vh; background: var(--bg-body); padding: 0.8vh 0.8vw; border-radius: 12px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sec); margin-bottom: 4px; }
+        
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #e0e6ed; border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb {
+            height: 16px; width: 16px; border-radius: 50%; background: #fff;
+            border: 2px solid var(--active-color); -webkit-appearance: none; margin-top: -5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
+        /* 强化中间地图外框 */
         #canvas-wrapper { 
             flex: 1; display: flex; align-items: center; justify-content: center; 
-            background: #fafafa; border-radius: 20px; border: 2px solid #f1f2f6; 
+            background: #fff; border-radius: 24px; 
+            border: 3px solid #636e72; /* 加深外边框颜色 */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 0 10px rgba(0,0,0,0.05); 
             overflow: hidden; padding: 10px;
         }
-
-        canvas { border: 4px solid #2d3436; border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        canvas { border-radius: 4px; background: #fff; }
         
         #mode-controls { display: flex; gap: 1vw; justify-content: center; padding: 5px 0; flex-shrink: 0; }
-        .btn-mode { flex: 1; max-width: 140px; border: none; padding: 1.6vh 5px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: clamp(11px, 1.2vw, 14px); }
-        .btn-r { background: var(--red); box-shadow: 0 4px 0 #d63031; } 
-        .btn-f { background: var(--green); box-shadow: 0 4px 0 #00897b; } 
-        .btn-s { background: var(--blue); box-shadow: 0 4px 0 #0984e3; } 
-        .btn-mode:active { transform: translateY(2px); box-shadow: none; }
+        .btn-mode { 
+            flex: 1; max-width: 160px; border: none; padding: 2vh 5px; border-radius: 16px; 
+            color: white; font-weight: 700; cursor: pointer; transition: all 0.3s ease; 
+            font-size: clamp(12px, 1.2vw, 15px);
+        }
+        .btn-r { background: linear-gradient(145deg, #ff8a8a, var(--red)); box-shadow: 0 5px 0 #d63031; } 
+        .btn-f { background: linear-gradient(145deg, #00d4aa, var(--green)); box-shadow: 0 5px 0 #00897b; } 
+        .btn-s { background: linear-gradient(145deg, #1fa2ff, var(--blue)); box-shadow: 0 5px 0 #0764ac; } 
 
-        #log-area h4 { color: #fff; margin: 0 0 10px 0; font-size: 14px; border-left: 4px solid var(--active-color); padding-left: 10px; }
+        #log-area h4 { color: #fff; margin: 0 0 1.5vh 0; font-size: 14px; border-left: 4px solid var(--active-color); padding-left: 10px; }
         #path-list { flex: 1; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 11px; color: var(--active-color); scrollbar-width: none; }
-        .log-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
-        #msg-status { height: 24px; color: var(--active-color); font-weight: bold; text-align: center; font-size: clamp(14px, 1.8vh, 18px); flex-shrink: 0; }
-        select { width: 100%; padding: 0.6vh; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 12px; }
+        #msg-status { height: 28px; color: var(--active-color); font-weight: 600; text-align: center; font-size: clamp(14px, 1.8vh, 18px); flex-shrink: 0; }
+        
+        select { width: 100%; padding: 1vh; border-radius: 12px; border: 1px solid var(--border-soft); background: #fff; font-size: 12px; color: var(--text-main); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -107,35 +133,34 @@
                 <h3>实时任务进度</h3>
                 <div class="step-circle" id="step-ring"><div id="step-display">0</div></div>
                 <div class="detail-row">
-                    <span>状态:</span>
-                    <span><span class="status-dot"></span><b id="mode-text">系统就绪</b></span>
+                    <span>运行状态:</span>
+                    <span><span class="status-dot"></span><b id="mode-text">待命</b></span>
                 </div>
                 <div class="detail-row"><span>坠崖重置:</span><span id="fail-display">0</span></div>
-                <div class="detail-row"><span>坐标:</span><span id="coord-display">[0, 3]</span></div>
+                <div class="detail-row"><span>当前坐标:</span><span id="coord-display">[0, 3]</span></div>
             </div>
 
             <div class="config-section">
                 <div class="config-label">移动方向概率</div>
-                <div class="slider-group"><label>向上 (UP) <b id="val-u">0.25</b></label><input type="range" id="sl-u" oninput="manualSync()"></div>
-                <div class="slider-group"><label>向右 (RIGHT) <b id="val-r">0.25</b></label><input type="range" id="sl-r" oninput="manualSync()"></div>
-                <div class="slider-group"><label>向下 (DOWN) <b id="val-d">0.25</b></label><input type="range" id="sl-d" oninput="manualSync()"></div>
-                <div class="slider-group"><label>向左 (LEFT) <b id="val-l">0.25</b></label><input type="range" id="sl-l" oninput="manualSync()"></div>
+                <div class="slider-group"><label>向上 <b id="val-u">0.25</b></label><input type="range" id="sl-u" value="25" oninput="manualSync()"></div>
+                <div class="slider-group"><label>向右 <b id="val-r">0.25</b></label><input type="range" id="sl-r" value="25" oninput="manualSync()"></div>
+                <div class="slider-group"><label>向下 <b id="val-d">0.25</b></label><input type="range" id="sl-d" value="25" oninput="manualSync()"></div>
+                <div class="slider-group"><label>向左 <b id="val-l">0.25</b></label><input type="range" id="sl-l" value="25" oninput="manualSync()"></div>
             </div>
         </div>
 
         <div style="padding-bottom:1vh;">
-            <label style="font-size: 10px; color: #999; display:block; margin-bottom:5px;">模拟演示速度</label>
+            <label style="font-size: 11px; color: var(--text-sec); display:block; margin-bottom:6px; font-weight:600;">模拟演示速度</label>
             <select id="speed">
                 <option value="1" selected>瞬间到达</option>
-                <option value="25">极速播放</option>
-                <option value="80">标准速度</option>
-                <option value="200">慢速观察</option>
+                <option value="50">快速播放</option>
+                <option value="150">标准速度</option>
             </select>
         </div>
     </div>
 
     <div id="center-area">
-        <div id="msg-status">系统就绪</div>
+        <div id="msg-status">准备就绪，请选择模拟模式</div>
         <div id="canvas-wrapper">
             <canvas id="world"></canvas>
         </div>
@@ -147,7 +172,7 @@
     </div>
 
     <div id="log-area">
-        <h4>实时路径记录</h4>
+        <h4>路径回溯日志</h4>
         <div id="path-list"></div>
     </div>
 </div>
@@ -160,8 +185,8 @@
 
     function resizeCanvas() {
         const wrapper = document.getElementById('canvas-wrapper');
-        const availableW = wrapper.clientWidth * 0.95;
-        const availableH = wrapper.clientHeight * 0.95;
+        const availableW = wrapper.clientWidth * 0.96;
+        const availableH = wrapper.clientHeight * 0.96;
         CELL = Math.min(availableW / COLS, availableH / ROWS);
         canvas.width = CELL * COLS; canvas.height = CELL * ROWS;
         draw();
@@ -230,48 +255,53 @@
         ctx.clearRect(0,0,canvas.width,canvas.height);
         for(let r=0; r<ROWS; r++){
             for(let c=0; c<COLS; c++){
-                // 再次加深地图线条至 #a0a8b0，使其非常明显
-                ctx.strokeStyle="#a0a8b0"; 
-                ctx.lineWidth = 1; 
+                // 重点修改：窗格线条加粗至 1.5px，颜色加深至 #a0a8b0
+                ctx.strokeStyle = "#a0a8b0"; 
+                ctx.lineWidth = 1.5; 
                 ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
 
-                if(r===3 && c>0 && c<11) { ctx.fillStyle="#2d3436"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); }
+                if(r===3 && c>0 && c<11) { 
+                    ctx.fillStyle = "#2c3e50"; // 悬崖颜色也同步加深
+                    ctx.fillRect(c*CELL, r*CELL, CELL, CELL); 
+                }
                 if(r===3 && c===11) { 
-                    ctx.fillStyle="#f39c12"; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); 
-                    ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.font=`bold ${CELL/5}px "Microsoft YaHei"`; ctx.textAlign="center";
-                    ctx.fillText("终点", c*CELL+CELL/2, r*CELL+CELL/1.8);
+                    let grad = ctx.createLinearGradient(c*CELL, r*CELL, c*CELL, (r+1)*CELL);
+                    grad.addColorStop(0, "#f39c12"); grad.addColorStop(1, "#e67e22");
+                    ctx.fillStyle = grad; ctx.fillRect(c*CELL, r*CELL, CELL, CELL); 
+                    ctx.fillStyle = "#fff"; ctx.textAlign="center"; ctx.font=`bold ${CELL/5}px "Microsoft YaHei"`;
+                    ctx.fillText("宝藏", c*CELL+CELL/2, r*CELL+CELL/1.8);
                 }
                 ctx.save();
-                ctx.font = `${CELL/7}px "Microsoft YaHei", monospace`; ctx.textAlign = "right";
-                ctx.fillStyle = (r===3 && c>0 && c<11) ? "#95a5a6" : "#b2bec3";
+                ctx.font = `bold ${CELL/7}px "Microsoft YaHei"`; ctx.textAlign = "right";
+                ctx.fillStyle = (r===3 && c>0 && c<11) ? "#ecf0f1" : "#7f8c8d";
                 ctx.fillText(`[${c},${r}]`, (c+1)*CELL - 5, (r+1)*CELL - 5);
                 ctx.restore();
             }
         }
-        ctx.beginPath(); ctx.setLineDash([5,3]); ctx.strokeStyle="rgba(100,100,100,0.3)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.setLineDash([5,4]); ctx.strokeStyle="rgba(52, 152, 219, 0.7)"; ctx.lineWidth = 2.5;
         history.forEach((p,i) => { if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL); else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL); });
         ctx.stroke(); ctx.setLineDash([]); 
         drawTurtle(pos.x, pos.y, turtleColor);
     }
 
     function manualSync() {
-        let v = ['u','r','d','l'].map(k => parseInt(document.getElementById('sl-'+k).value || 25));
+        let v = ['u','r','d','l'].map(k => parseInt(document.getElementById('sl-'+k).value));
         let total = v.reduce((a,b)=>a+b) || 1;
         ['u','r','d','l'].forEach((k,i) => document.getElementById('val-'+k).innerText = (v[i]/total).toFixed(2));
     }
 
     function run(m) {
         if(timer) clearInterval(timer);
-        document.getElementById('msg-status').innerText = "逻辑演算中...";
+        document.getElementById('msg-status').innerText = "演化算法计算中...";
         logList.innerHTML = "";
-        const config = { 'random': '#ff7675', 'follow': '#00b894', 'smart': '#74b9ff' };
+        const config = { 'random': '#ff7675', 'follow': '#00b894', 'smart': '#0984e3' };
         turtleColor = config[m];
         document.documentElement.style.setProperty('--active-color', turtleColor);
         if(m==='random') { ['sl-u','sl-r','sl-d','sl-l'].forEach(id=>document.getElementById(id).value=25); }
         else { document.getElementById('sl-u').value=20; document.getElementById('sl-r').value=40; 
                document.getElementById('sl-d').value=20; document.getElementById('sl-l').value=20; }
         manualSync();
-        const limits = { 'random': [1000, 1500], 'follow': [500, 1000], 'smart': [12, 100] };
+        const limits = { 'random': [1000, 2000], 'follow': [400, 800], 'smart': [12, 100] };
         const [minSteps, maxSteps] = limits[m];
 
         setTimeout(() => {
@@ -313,22 +343,22 @@
                 if(attempt === 4999) finalHistory = th;
             }
 
-            document.getElementById('msg-status').innerText = "模拟执行中...";
-            document.getElementById('mode-text').innerText = "正在运行";
+            document.getElementById('mode-text').innerText = "模拟中";
             let i = 0; history = [];
             timer = setInterval(() => {
                 const cur = finalHistory[i]; pos = cur.p; history.push({...pos});
                 document.getElementById('step-display').innerText = i;
-                ring.style.background = `conic-gradient(var(--active-color) ${(i/(finalHistory.length-1))*360}deg, #eee 0deg)`;
+                ring.style.background = `conic-gradient(var(--active-color) ${(i/(finalHistory.length-1))*360}deg, #edf2f7 0deg)`;
                 document.getElementById('fail-display').innerText = cur.f;
                 document.getElementById('coord-display').innerText = `[${pos.x}, ${pos.y}]`;
                 const item = document.createElement('div'); item.className='log-item';
-                item.innerHTML = `<span>步数 ${i}</span><span>[${pos.x}, ${pos.y}]</span>`;
+                item.innerHTML = `<span>第 ${i.toString().padStart(4, '0')} 步</span><span>坐标 [${pos.x}, ${pos.y}]</span>`;
                 logList.prepend(item);
                 draw();
                 if(++i >= finalHistory.length) { 
                     clearInterval(timer);
-                    document.getElementById('mode-text').innerText = "任务达成"; document.getElementById('msg-status').innerText = "任务达成";
+                    document.getElementById('mode-text').innerText = "已达成";
+                    document.getElementById('msg-status').innerText = "成功寻获宝藏！";
                 }
             }, parseInt(document.getElementById('speed').value));
         }, 50);
