@@ -95,11 +95,10 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* 强化中间地图外框 */
         #canvas-wrapper { 
             flex: 1; display: flex; align-items: center; justify-content: center; 
             background: #fff; border-radius: 24px; 
-            border: 3px solid #636e72; /* 加深外边框颜色 */
+            border: 3px solid #636e72; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 0 10px rgba(0,0,0,0.05); 
             overflow: hidden; padding: 10px;
         }
@@ -189,7 +188,6 @@
         const availableH = wrapper.clientHeight * 0.96;
         CELL = Math.min(availableW / COLS, availableH / ROWS);
         canvas.width = CELL * COLS; canvas.height = CELL * ROWS;
-        draw();
     }
 
     window.addEventListener('resize', resizeCanvas);
@@ -253,17 +251,27 @@
 
     function draw() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        const time = Date.now();
+        const breathAlpha = 0.5 + Math.sin(time / 400) * 0.3;
+
         for(let r=0; r<ROWS; r++){
             for(let c=0; c<COLS; c++){
-                // 重点修改：窗格线条加粗至 1.5px，颜色加深至 #a0a8b0
                 ctx.strokeStyle = "#a0a8b0"; 
                 ctx.lineWidth = 1.5; 
                 ctx.strokeRect(c*CELL, r*CELL, CELL, CELL);
 
                 if(r===3 && c>0 && c<11) { 
-                    ctx.fillStyle = "#2c3e50"; // 悬崖颜色也同步加深
+                    ctx.fillStyle = "#2c3e50"; 
                     ctx.fillRect(c*CELL, r*CELL, CELL, CELL); 
+                    ctx.save();
+                    ctx.fillStyle = `rgba(255, 118, 117, ${breathAlpha})`;
+                    ctx.font = `bold ${CELL/4}px "Microsoft YaHei"`;
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    ctx.fillText("危险", c*CELL + CELL/2, r*CELL + CELL/2);
+                    ctx.restore();
                 }
+                
                 if(r===3 && c===11) { 
                     let grad = ctx.createLinearGradient(c*CELL, r*CELL, c*CELL, (r+1)*CELL);
                     grad.addColorStop(0, "#f39c12"); grad.addColorStop(1, "#e67e22");
@@ -271,6 +279,7 @@
                     ctx.fillStyle = "#fff"; ctx.textAlign="center"; ctx.font=`bold ${CELL/5}px "Microsoft YaHei"`;
                     ctx.fillText("宝藏", c*CELL+CELL/2, r*CELL+CELL/1.8);
                 }
+
                 ctx.save();
                 ctx.font = `bold ${CELL/7}px "Microsoft YaHei"`; ctx.textAlign = "right";
                 ctx.fillStyle = (r===3 && c>0 && c<11) ? "#ecf0f1" : "#7f8c8d";
@@ -278,10 +287,33 @@
                 ctx.restore();
             }
         }
-        ctx.beginPath(); ctx.setLineDash([5,4]); ctx.strokeStyle="rgba(52, 152, 219, 0.7)"; ctx.lineWidth = 2.5;
-        history.forEach((p,i) => { if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL); else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL); });
-        ctx.stroke(); ctx.setLineDash([]); 
+
+        // --- 核心改动：轨迹颜色跟随小乌龟 ---
+        if (history.length > 0) {
+            ctx.save();
+            ctx.beginPath(); 
+            ctx.setLineDash([6, 4]); // 虚线效果
+            // 使用当前小乌龟的颜色，并添加 0.6 的透明度使其更有质感
+            ctx.strokeStyle = turtleColor + "99"; // 添加十六进制透明度 99 (约为 0.6)
+            ctx.lineWidth = 3; // 轨迹加粗
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            
+            history.forEach((p,i) => { 
+                if(i===0) ctx.moveTo((p.x+.5)*CELL, (p.y+.5)*CELL); 
+                else ctx.lineTo((p.x+.5)*CELL, (p.y+.5)*CELL); 
+            });
+            
+            ctx.stroke(); 
+            ctx.restore();
+        }
+        
         drawTurtle(pos.x, pos.y, turtleColor);
+    }
+
+    function animate() {
+        draw();
+        requestAnimationFrame(animate);
     }
 
     function manualSync() {
@@ -295,7 +327,7 @@
         document.getElementById('msg-status').innerText = "演化算法计算中...";
         logList.innerHTML = "";
         const config = { 'random': '#ff7675', 'follow': '#00b894', 'smart': '#0984e3' };
-        turtleColor = config[m];
+        turtleColor = config[m]; // 这里更新了颜色全局变量
         document.documentElement.style.setProperty('--active-color', turtleColor);
         if(m==='random') { ['sl-u','sl-r','sl-d','sl-l'].forEach(id=>document.getElementById(id).value=25); }
         else { document.getElementById('sl-u').value=20; document.getElementById('sl-r').value=40; 
@@ -354,7 +386,6 @@
                 const item = document.createElement('div'); item.className='log-item';
                 item.innerHTML = `<span>第 ${i.toString().padStart(4, '0')} 步</span><span>坐标 [${pos.x}, ${pos.y}]</span>`;
                 logList.prepend(item);
-                draw();
                 if(++i >= finalHistory.length) { 
                     clearInterval(timer);
                     document.getElementById('mode-text').innerText = "已达成";
@@ -364,7 +395,7 @@
         }, 50);
     }
 
-    manualSync(); resizeCanvas();
+    manualSync(); resizeCanvas(); animate();
 </script>
 </body>
 </html>
